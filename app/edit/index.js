@@ -12,6 +12,7 @@ import {
   ProgressViewIOS,
   AlertIOS
 } from 'react-native';
+import _ from 'lodash'
 import request from '../common/request'
 import config from '../common/config'
 const ImagePicker = require('react-native-image-picker')
@@ -22,6 +23,8 @@ import  Video  from 'react-native-video';
 import Icon from 'react-native-vector-icons/Ionicons'
 import { CountDownText } from 'react-native-sk-countdown'
 import CountDownTimer from 'react_native_countdowntimer'
+import {AudioRecorder, AudioUtils} from 'react-native-audio';
+import Sound from 'react-native-sound';
 const videoOptions = {
   title: '选择视频',
   cancelButtonTitle: '取消',
@@ -36,6 +39,28 @@ const videoOptions = {
     path: 'images'
   }
 };
+const defaultState = {
+  previewVideo:null,
+  rate: 1,
+  muted: false,
+  repeat: false,
+  resizeMode: 'contain',
+  videoOK: true,
+  video:null,
+  videoLoaded: false,
+  videoUploaded:false,
+  videoUploading:false,
+  videoProgress: 0,
+  videoUploadedProgress:0.1,
+  videoTotal: 0,
+  currentTime: 0,
+  duration: 0,
+  counting:false,
+  recording:false,
+  audioName:'haoxiong.aac',
+  audioPlaying:false,
+  recordDone:false
+}
 export default class Edit extends Component {
   constructor(props){
     super(props);
@@ -57,7 +82,76 @@ export default class Edit extends Component {
       duration: 0,
       counting:false,
       recording:false,
+      audioName:'haoxiong.aac',
+      audioPlaying:false,
+      recordDone:false
     }
+  }
+  _preview(){
+
+    this.setState({
+      videoProgress:0,
+      audioPlaying:true
+    })
+    let audioPath = AudioUtils.DocumentDirectoryPath + '/' + this.state.audioName
+    console.log(audioPath);
+    if (/^http/.test(audioPath)) {
+      var sound = new Sound(audioPath,  (error) => {
+        if (error) {
+          console.log('failed to load the sound', error);
+        }
+      });
+    }else{
+      var sound = new Sound(audioPath, '', (error) => {
+        console.log(123);
+        if (error) {
+          console.log('failed to load the sound', error);
+        }
+      });
+      // console.log(sound);
+      // console.log(1);
+      // console.log(sound);
+    }
+    // Sound.setCategory('Playback',true);
+    if (this.state.audioPlaying) {
+      this.setState({
+        audioPlaying:false
+      })
+      sound.stop(() => {
+
+      })
+    }
+    // setTimeout(() => {
+      sound.play((success) => {
+          if (success) {
+            console.log('successfully finished playing');
+          } else {
+            console.log('playback failed due to audio decoding errors');
+          }
+          sound.release();
+        });
+    // },100)
+    this.refs.videoPlayer.seek(0)
+  }
+  _initAudio(){
+    let audioPath = AudioUtils.DocumentDirectoryPath + '/' + this.state.audioName
+    AudioRecorder.prepareRecordingAtPath(audioPath, {
+        SampleRate: 22050,
+        Channels: 1,
+        AudioQuality: "High",
+        AudioEncoding: "aac",
+        // AudioEncodingBitRate: 32000
+      });
+      AudioRecorder.onProgress = (data) => {
+        this.setState({currentTime: Math.floor(data.currentTime)});
+      };
+
+      // AudioRecorder.onFinished = (data) => {
+      //   // Android callback comes in the form of a promise instead.
+      //   if (Platform.OS === 'ios') {
+      //     this._finishRecording(data.status === "OK", data.audioFileURL);
+      //   }
+      // };
   }
   componentDidMount(){
     let user;
@@ -72,7 +166,9 @@ export default class Edit extends Component {
         }
       }
     })
+    this._initAudio()
   }
+
   _getQiniuToken(){
     let accessToken = this.state.user.accessToken;
     let signatureURL = config.api.base + config.api.signature;
@@ -88,9 +184,11 @@ _pickVideo(){
       return
     }
     let uri = response.uri;
-    this.setState({
-      previewVideo:uri
-    })
+    let state = _.clone(defaultState)
+    state.previewVideo = uri
+    this.setState(
+      state
+    )
     this._getQiniuToken()
     .then((data) => {
 
@@ -185,9 +283,12 @@ if (this.state.recording) {
 }
 _onEnd(){
   if (this.state.recording) {
+    AudioRecorder.stopRecording()
     this.setState({
+      recordDone:true,
       videoProgress: 1,
-      recording:false
+      recording:false,
+      audioPlaying:false
     });
   }
 }
@@ -212,11 +313,13 @@ _record(){
     videoProgress:0,
     counting:false,
     recording:true,
+    recordDone:false
   })
-this.refs.videoPlayer.seek(0)
+  AudioRecorder.startRecording()
+  this.refs.videoPlayer.seek(0)
 }
 _counting(){
-  if (!this.state.recording && !this.state.counting) {
+  if (!this.state.recording && !this.state.counting && !this.state.audioPlaying) {
 
     this.setState({
       counting:true
@@ -227,6 +330,7 @@ _counting(){
 _onLoadStart(){}
 _onLoad(){}
   render() {
+    // console.log(this.state.audioPlaying);
     return (
       <View style={styles.container}>
         <View style={styles.toolbar}>
@@ -269,12 +373,22 @@ _onLoad(){}
                 </View>:null
               }
               {
-                this.state.recording ?
+                this.state.recording || this.state.audioPlaying?
                 <View style={styles.progressTipBox}>
                   <ProgressViewIOS style={styles.progressBar} progressTintColor='#ee735c' progress={this.state.videoProgress}/>
-                  <Text style={styles.progressTip}>
-                    录制声音中
-                  </Text>
+                  {
+                    this.state.recording?
+                    <Text style={styles.progressTip}>
+                      录制声音中
+                    </Text>:null
+                  }
+                </View>:null
+              }
+              {
+                this.state.recordDone?
+                <View style={styles.previewBox}>
+                  <Icon name='ios-play' style={styles.previewIcon}/>
+                  <Text style={styles.previewText} onPress={this._preview.bind(this)}>预览</Text>
                 </View>:null
               }
             </View>
@@ -289,7 +403,7 @@ _onLoad(){}
           }
           {this.state.videoUploaded?
             <View style={styles.recordBox}>
-              <View style={[styles.recordIconBox,this.state.recording && styles.recordOn]}>
+              <View style={[styles.recordIconBox,(this.state.recording || this.state.audioPlaying)&& styles.recordOn]}>
                 {
                   this.state.counting && !this.state.recording
                   ?   <CountDownText
@@ -439,5 +553,27 @@ const styles = StyleSheet.create({
     fontSize:32,
     fontWeight:'600',
     color:'#fff'
+  },
+  previewBox:{
+    width:80,
+    height:30,
+    position:'absolute',
+    right:10,
+    bottom:10,
+    borderWidth:1,
+    borderColor:'#ee735c',
+    borderRadius:3,
+    flexDirection:'row',
+    justifyContent:'center',
+    alignItems:'center'
+  },
+  previewIcon:{
+    marginRight:5,
+    fontSize:20,
+    color:'#ee735c'
+  },
+  previewText:{
+    fontSize:20,
+    color:'#ee735c'
   },
 });
