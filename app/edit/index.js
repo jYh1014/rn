@@ -25,6 +25,7 @@ import { CountDownText } from 'react-native-sk-countdown'
 import CountDownTimer from 'react_native_countdowntimer'
 import {AudioRecorder, AudioUtils} from 'react-native-audio';
 import Sound from 'react-native-sound';
+import * as Progress from 'react-native-progress';
 const videoOptions = {
   title: '选择视频',
   cancelButtonTitle: '取消',
@@ -59,33 +60,21 @@ const defaultState = {
   recording:false,
   audioName:'haoxiong.aac',
   audioPlaying:false,
-  recordDone:false
+  recordDone:false,
+  audioUploaded:false,
+  audioUploading:false,
+  audioUploadedProgress:0.14,
+  audio:null,
+  audioPath:AudioUtils.DocumentDirectoryPath + '/haoxiong.aac',
+  videoId:null,
+  audioId:null
 }
 export default class Edit extends Component {
   constructor(props){
     super(props);
-    this.state={
-      previewVideo:null,
-      rate: 1,
-      muted: false,
-      repeat: false,
-      resizeMode: 'contain',
-      videoOK: true,
-      video:null,
-      videoLoaded: false,
-      videoUploaded:false,
-      videoUploading:false,
-      videoProgress: 0,
-      videoUploadedProgress:0.1,
-      videoTotal: 0,
-      currentTime: 0,
-      duration: 0,
-      counting:false,
-      recording:false,
-      audioName:'haoxiong.aac',
-      audioPlaying:false,
-      recordDone:false
-    }
+    let newstate = _.clone(defaultState)
+    newstate.user = this.props.user||{}
+    this.state = newstate
   }
   _preview(){
 
@@ -93,8 +82,8 @@ export default class Edit extends Component {
       videoProgress:0,
       audioPlaying:true
     })
-    let audioPath = AudioUtils.DocumentDirectoryPath + '/' + this.state.audioName
-    console.log(audioPath);
+    let audioPath = this.state.audioPath
+
     if (/^http/.test(audioPath)) {
       var sound = new Sound(audioPath,  (error) => {
         if (error) {
@@ -102,15 +91,14 @@ export default class Edit extends Component {
         }
       });
     }else{
+
       var sound = new Sound(audioPath, '', (error) => {
-        console.log(123);
+
         if (error) {
           console.log('failed to load the sound', error);
         }
       });
-      // console.log(sound);
-      // console.log(1);
-      // console.log(sound);
+
     }
     // Sound.setCategory('Playback',true);
     if (this.state.audioPlaying) {
@@ -121,7 +109,7 @@ export default class Edit extends Component {
 
       })
     }
-    // setTimeout(() => {
+    setTimeout(() => {
       sound.play((success) => {
           if (success) {
             console.log('successfully finished playing');
@@ -130,11 +118,43 @@ export default class Edit extends Component {
           }
           sound.release();
         });
-    // },100)
+    },100)
     this.refs.videoPlayer.seek(0)
   }
+  _uploadAudio(){
+    let tags = 'app,audio';
+    let folder = 'audio';
+    let timestamp = Date.now();
+    this._getToken({
+      type:'audio',
+      timestamp:timestamp,
+      cloud:'cloudinary'
+    })
+    .catch((err) => {
+      console.log(err);
+    })
+    .then((data) => {
+      if (data && data.success) {
+          let signature = data.data.token;
+          let key = data.data.key;
+          let body = new FormData();
+          body.append('folder',folder);
+          body.append('signature',signature);
+          body.append('tags',tags);
+          body.append('timestamp',timestamp);
+          body.append('api_key',config.cloudinary.api_key);
+          body.append('resource_type','video');
+          body.append('file',{
+            type:'video/mp4',
+            name:key,
+            uri:this.state.audioPath,
+          });
+          this._upload(body,'audio');
+        }
+    })
+  }
   _initAudio(){
-    let audioPath = AudioUtils.DocumentDirectoryPath + '/' + this.state.audioName
+    let audioPath = this.state.audioPath
     AudioRecorder.prepareRecordingAtPath(audioPath, {
         SampleRate: 22050,
         Channels: 1,
@@ -169,14 +189,10 @@ export default class Edit extends Component {
     this._initAudio()
   }
 
-  _getQiniuToken(){
-    let accessToken = this.state.user.accessToken;
+  _getToken(body){
+    body.accessToken = this.state.user.accessToken;
     let signatureURL = config.api.base + config.api.signature;
-    return request.post(signatureURL,{
-          accessToken: accessToken,
-          type:'video',
-          cloud:'qiniu',
-        })
+    return request.post(signatureURL,body)
   }
 _pickVideo(){
   ImagePicker.showImagePicker(videoOptions, (response) => {
@@ -186,10 +202,17 @@ _pickVideo(){
     let uri = response.uri;
     let state = _.clone(defaultState)
     state.previewVideo = uri
+    state.user = this.state.user
     this.setState(
       state
     )
-    this._getQiniuToken()
+    this._getToken({
+      type:'video',
+      cloud:'qiniu'
+    })
+    .catch((err) => {
+      AlertIOS.alert('上传出错')
+    })
     .then((data) => {
 
         if (data && data.success) {
@@ -203,19 +226,23 @@ _pickVideo(){
             uri:uri,
             name:key
           });
-          this._upload(body);
+          this._upload(body,'video');
         }
     })
   });
 }
-_upload(body){
-  this.setState({
-    videoUploadedProgress:0,
-    videoUploaded: false,
-    videoUploading: true
-  })
+_upload(body,type){
+
   let xhr = new XMLHttpRequest();
   let url = config.qiniu.upload;
+  if (type === 'audio') {
+    url = config.cloudinary.video
+  }
+  let state = {}
+  state[type + 'UploadedProgress'] = 0
+  state[type + 'Uploaded'] = false
+  state[type + 'Uploading'] = true
+  this.setState(state)
   xhr.open('POST',url);
   xhr.onload = () => {
     if (xhr.status !== 200) {
@@ -235,34 +262,52 @@ _upload(body){
     }
 
     if (response) {
-      this.setState({
-        video:response,
-        videoUploading: false,
-        videoUploaded: true,
-      })
-      let videoURL = config.api.base + config.api.video;
-      let accessToken = this.state.user.accessToken;
-      request.post(videoURL,{
-        accessToken:accessToken,
-        video:response
-      })
-      .catch((err) => {
-        AlertIOS.alert('视频同步出错，请重新上传')
-      })
-      .then((data) => {
-        if (!data || !data.success) {
-          AlertIOS.alert('视频同步出错，请重新上传')
+      let newstate = {}
+      newstate[type] = response
+      newstate[type + 'Uploading'] = false
+      newstate[type + 'Uploaded'] = true
+      this.setState(newstate)
+
+        let updateURL = config.api.base + config.api[type];
+        let accessToken = this.state.user.accessToken;
+        let updateBody = {
+          accessToken: accessToken
         }
-      })
+        updateBody[type] = response
+        if (type === 'audio') {
+          updateBody.videoId = this.state.videoId
+        }
+        request.post(updateURL,updateBody)
+        .catch((err) => {
+          if (type === 'video') {
+            AlertIOS.alert('视频同步出错，请重新上传')
+          }else if (type === 'audio') {
+            AlertIOS.alert('Yin频同步出错，请重新上传')
+          }
+        })
+        .then((data) => {
+          if (data && data.success) {
+            let mediaState = {}
+            mediaState[type + 'Id'] = data.data
+            this.setState(mediaState)
+          }else{
+            if (type === 'video') {
+              AlertIOS.alert('视频同步出错，请重新上传')
+            }else if (type === 'audio') {
+              AlertIOS.alert('Yin频同步出错，请重新上传')
+            }
+          }
+        })
+
     }
   }
   if (xhr.upload) {
     xhr.upload.onprogress = (event) => {
       if (event.lengthComputable) {
         let percent = Number((event.loaded/event.total).toFixed(2));
-        this.setState({
-          videoUploadedProgress: percent,
-        })
+        let progressState = {}
+        progressState[type + 'UploadedProgress'] = percent
+        this.setState(progressState)
       }
     }
   }
@@ -426,6 +471,24 @@ _onLoad(){}
               </View>
             </View>:null
           }
+          {
+            this.state.videoUploaded && this.state.recordDone
+            ?<View style={styles.uploadAudioBox}>
+            {
+              !this.state.audioUploaded && !this.state.audioUploading
+              ?<Text style={styles.uploadAudioText} onPress={this._uploadAudio.bind(this)}>下一步</Text>
+              :null
+            }
+            {
+              this.state.audioUploading?
+              <Progress.Circle size={70} showsText={true} color={'#ee735c'} progress={this.state.audioUploadedProgress}/>
+              :null
+            }
+
+          </View>
+          :null
+          }
+
 
         </View>
       </View>
@@ -436,6 +499,23 @@ _onLoad(){}
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  uploadAudioBox:{
+    width:width,
+    height:60,
+    flexDirection:'row',
+    justifyContent:'center',
+    alignItems:'center'
+  },
+  uploadAudioText:{
+    width:width -20,
+    padding:5,
+    borderWidth:1,
+    borderColor:'#ee735c',
+    borderRadius:5,
+    textAlign:'center',
+    fontSize:30,
+    color:'#ee735c'
   },
   toolbar: {
     flexDirection:'row',
@@ -563,6 +643,7 @@ const styles = StyleSheet.create({
     borderWidth:1,
     borderColor:'#ee735c',
     borderRadius:3,
+    backgroundColor:'#fff',
     flexDirection:'row',
     justifyContent:'center',
     alignItems:'center'

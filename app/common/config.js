@@ -29,7 +29,8 @@ const option = {
     verify: "api/u/verify",
     signature: "api/signature",
     update: "api/u/update",
-    video:"api/creations/video"
+    video:"api/creations/video",
+    audio:"api/creations/audio"
   }
 }
 export default option
