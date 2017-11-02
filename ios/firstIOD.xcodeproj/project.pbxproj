@@ -42,7 +42,7 @@
 		5E40D442935E410C993FE7A5 /* Entypo.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 1C9ECB5973E943AB937B6608 /* Entypo.ttf */; };
 		5E9157361DD0AC6A00FF2AA8 /* libRCTAnimation.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5E9157331DD0AC6500FF2AA8 /* libRCTAnimation.a */; };
 		65356365826E4A7CBA3634DB /* SimpleLineIcons.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 6A14ED3328F448B2BA2B3180 /* SimpleLineIcons.ttf */; };
-		6A9C85741F68F6BE00A8765D /* libART.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 6A9C85501F68F68600A8765D /* libART.a */; };
+		6A9C85741F68F6BE00A8765D /* libART.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 6A9C85501F68F68600A8765D /* libART.a */; settings = {ATTRIBUTES = (Required, ); }; };
 		6A9C85761F68FCBC00A8765D /* ART in Resources */ = {isa = PBXBuildFile; fileRef = 6A9C85751F68FCBC00A8765D /* ART */; };
 		6BC7DDB8C27A43AB8F1220D9 /* MaterialCommunityIcons.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 939ECC2A2F284D8F8428BF53 /* MaterialCommunityIcons.ttf */; };
 		76C2AA5CDBE843B08A0C895C /* Foundation.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 513F133EF4B248DB8BD9066D /* Foundation.ttf */; };

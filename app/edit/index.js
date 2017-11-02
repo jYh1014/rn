@@ -10,8 +10,11 @@ import {
   Dimensions,
   AsyncStorage,
   ProgressViewIOS,
-  AlertIOS
+  AlertIOS,
+  Modal,
+  TextInput
 } from 'react-native';
+import Button from 'react-native-button'
 import _ from 'lodash'
 import request from '../common/request'
 import config from '../common/config'
@@ -67,7 +70,13 @@ const defaultState = {
   audio:null,
   audioPath:AudioUtils.DocumentDirectoryPath + '/haoxiong.aac',
   videoId:null,
-  audioId:null
+  audioId:null,
+  title:'',
+  publishProgress:0.2,
+  publishing:false,
+  willPublish:false,
+  modalVisible:false,
+  // "react": "16.0.0-alpha.12",
 }
 export default class Edit extends Component {
   constructor(props){
@@ -100,7 +109,7 @@ export default class Edit extends Component {
       });
 
     }
-    // Sound.setCategory('Playback',true);
+
     if (this.state.audioPlaying) {
       this.setState({
         audioPlaying:false
@@ -256,7 +265,7 @@ _upload(body,type){
     let response;
     try {
       response = JSON.parse(xhr.responseText)
-      console.log(response);
+      // console.log(response);
     } catch (e) {
       console.log(e);
     }
@@ -286,9 +295,14 @@ _upload(body,type){
           }
         })
         .then((data) => {
+
           if (data && data.success) {
             let mediaState = {}
             mediaState[type + 'Id'] = data.data
+            if (type === 'audio') {
+              this._showModal()
+              mediaState.willPublish = true
+            }
             this.setState(mediaState)
           }else{
             if (type === 'video') {
@@ -305,6 +319,7 @@ _upload(body,type){
     xhr.upload.onprogress = (event) => {
       if (event.lengthComputable) {
         let percent = Number((event.loaded/event.total).toFixed(2));
+        this.setState({publishProgress:percent})
         let progressState = {}
         progressState[type + 'UploadedProgress'] = percent
         this.setState(progressState)
@@ -374,6 +389,42 @@ _counting(){
 }
 _onLoadStart(){}
 _onLoad(){}
+_closeModal(){
+  
+  this.setState({modalVisible:false,audioUploading:false,audioUploaded:false})
+}
+_showModal(){
+  this.setState({modalVisible:true})
+}
+_submit(){
+  let body = {
+    title:this.state.title,
+    videoId:this.state.videoId,
+    audioId:this.state.audioId
+  }
+  let creationURL = config.api.base + config.api.creations
+  let user = this.state.user
+  if (user && user.accessToken) {
+    body.accessToken = user.accessToken
+    this.setState({publishing:true})
+    request.post(creationURL,body)
+      .then((data) => {
+        // console.log(data)
+        if (data && data.success) {
+          // this._closeModal();   
+          
+          // AlertIOS.alert('视频发布成功')
+          let state = _.clone(defaultState)
+          this.setState(state) 
+          
+          
+        }else{
+          this.setState({publishing:false})
+          AlertIOS.alert('视频发布失败')
+        }
+      })
+  }
+}
   render() {
     // console.log(this.state.audioPlaying);
     return (
@@ -488,9 +539,56 @@ _onLoad(){}
           </View>
           :null
           }
-
-
         </View>
+
+          <Modal
+            animationType={'fade'} visible={this.state.modalVisible}>
+            <View style={styles.modalContainer}>
+              <Icon name="ios-close-outline" style={styles.closeIcon}
+                onPress={this._closeModal.bind(this)}/>
+              {
+                this.state.audioUploaded && !this.state.publishing
+                ?<View style={styles.fieldBox}>
+                  <TextInput
+                    placeholder={'给好好一句宣言吧'}
+                    style={styles.inputfield}
+                    autoCorrect={false}
+                    autoCapitalize={'none'}
+                    defaultValue={this.state.title}
+                    onChangeText={(text) => {
+                      this.setState({
+                        title:text
+                      })
+                    }}
+                     />
+                 </View>:null
+              }
+              {
+                this.state.publishing
+                ?<View style={styles.loadingBox}>
+
+                  <Text style={styles.loadingText}>耐心等一下，拼命为您生成专属视频中...</Text>
+                {
+                  this.state.willPublish
+                  ?<Text style={styles.loadingText}>正在合成视频音频...</Text>:null
+                }
+                {
+                  this.state.publishProgress > 0.3
+                  ?<Text style={styles.loadingText}>开始上传喽...</Text>:null
+                }
+                  {/* <Progress.Circle size={70} showsText={true} color={'#ee735c'} progress={this.state.publishProgress}/> */}
+                  </View> :null
+              }
+
+              <View style={styles.submitBox}>
+                {
+                  this.state.audioUploaded && !this.state.publishing
+                ?<Button style={styles.btn} onPress={this._submit.bind(this)}>发布视频</Button>:null
+              }
+
+              </View>
+            </View>
+          </Modal>
       </View>
     );
   }
@@ -643,7 +741,7 @@ const styles = StyleSheet.create({
     borderWidth:1,
     borderColor:'#ee735c',
     borderRadius:3,
-    backgroundColor:'#fff',
+    backgroundColor:'transparent',
     flexDirection:'row',
     justifyContent:'center',
     alignItems:'center'
@@ -651,10 +749,70 @@ const styles = StyleSheet.create({
   previewIcon:{
     marginRight:5,
     fontSize:20,
-    color:'#ee735c'
+    color:'#ee735c',
+    backgroundColor:'transparent'
   },
   previewText:{
     fontSize:20,
     color:'#ee735c'
+  },
+  modalContainer: {
+    width:width,
+    height:height,
+    paddingTop:50,
+    backgroundColor:'#fff',
+    // position:'relative'
+  },
+  submitBox:{
+    marginTop:50,
+    padding:15,
+  },
+  closeIcon: {
+    position:'absolute',
+    height:40,
+    width:40,
+    fontSize:32,
+    right:20,
+    top:30,
+    color:'#ee735c'
+  },
+  inputField:{
+    flex:1,
+    height:36,
+    color:'#666',
+    fontSize:14,
+
+  },
+  btn: {
+    padding: 10,
+    marginTop:65,
+    marginRight:10,
+    marginLeft:10,
+    borderRadius:4,
+    borderColor:'#ee735c',
+    borderWidth:1,
+    backgroundColor:'transparent',
+    color:'#ee735c'
+  },
+  loadingText:{
+    color:'#333',
+    marginBottom:10,
+    textAlign:'center'
+  },
+  loadingBox:{
+    width:width,
+    height:50,
+    marginTop:10,
+    padding:15,
+    alignItems:'center'
+  },
+  fieldBox:{
+    width:width-40,
+    height:36,
+    marginTop:30,
+    marginLeft:20,
+    marginRight:20,
+    borderBottomWidth:1,
+    borderBottomColor:'#eaeaea'
   },
 });

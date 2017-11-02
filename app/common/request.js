@@ -10,7 +10,7 @@ request.get = function(url, params){
     url += '?' + queryString.stringify(params);
   }
   return fetch(url)
-  .then((response) => response.json())
+  .then((response) =>response.json())
   .then((response) => Mock.mock(response))
 }
 

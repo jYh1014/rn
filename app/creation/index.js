@@ -15,7 +15,8 @@ import {
   Image,
   Dimensions,
   ActivityIndicator,
-  RefreshControl
+  RefreshControl,
+  AsyncStorage
 } from 'react-native';
 // import PropTypes from 'prop-types'
 // import { Navigator } from 'react-native-deprecated-custom-components'
@@ -37,7 +38,23 @@ export default class List extends Component {
     }
   }
   componentDidMount(){
-    this._fetchData(1);
+    
+    AsyncStorage.getItem('user')
+    .then((data) => {
+      
+      if (data) {
+      user = JSON.parse(data);
+        if (user && user.accessToken) {
+          this.setState({
+            user: user
+          })
+        }
+      }
+    })
+    setTimeout(() => {
+      this._fetchData(1);
+    },1)
+    
   }
   _fetchData(page) {
     if (page !== 0) {
@@ -45,11 +62,13 @@ export default class List extends Component {
     }else{
       this.setState({isRefreshing: true});
     }
+
     request.get(config.api.base + config.api.creations, {
-      accessToken: 'igieivv',
-      page: page
+      page: page,
+      accessToken:this.state.user.accessToken
     })
     .then((data) => {
+      
       if (data.success) {
         let items = cachedResults.items.slice();
         if (page !== 0) {
@@ -86,6 +105,7 @@ export default class List extends Component {
   }
 
   _renderRow(row){
+    console.log(row)
     return (
       <Item row = {row} onSelect = {() => this._loadPage(row)} key = {row._id}/>
     )
@@ -127,11 +147,13 @@ export default class List extends Component {
     this._fetchData(0);
   }
   _loadPage(row){
+   
     this.props.navigator.push({
       component: Detail,
       title: '视频详情',
       passProps: {
-        data: row
+        data: row,
+        user:this.state.user
       }
     });
   }

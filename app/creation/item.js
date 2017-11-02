@@ -47,11 +47,12 @@ export default class Item extends Component {
 
   render() {
     const { row } = this.props;
+    console.log(row)
     return (
       <TouchableHighlight onPress = {this.props.onSelect}>
         <View style={styles.item}>
           <Text style={styles.title}>{row.title}</Text>
-          <Image source={{uri:row.thumb}} style={styles.thumb} />
+          <Image source={{uri:row.cloudinary_thumb}} style={styles.thumb} />
             <Icon name="ios-play" size={28} style={styles.play}/>
           <View style={styles.itemFooter}>
             <View style={styles.handleBox}>

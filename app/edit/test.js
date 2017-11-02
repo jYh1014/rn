@@ -47,7 +47,7 @@ export default class Account extends Component {
     return (
       <View style={styles.container}>
       <Text>不爽了{this.state.auth.times}次</Text>
-
+      
       </View>
     );
   }

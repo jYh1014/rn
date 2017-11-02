@@ -12,6 +12,7 @@ import {
   ListView,
   TextInput,
   Modal,
+  AsyncStorage,
   AlertIOS
 } from 'react-native';
 import Button from 'react-native-button'
@@ -48,7 +49,8 @@ export default class Detail extends Component {
       animationType: 'none',
       modalVisible:false,
       isSending:false,
-      content:''
+      content:'',
+      user:this.props.user
     }
   }
   _backToList(){
@@ -114,19 +116,20 @@ export default class Detail extends Component {
       this.setState({paused: false})
     }
   }
-  componentDidMount(){
-    this._fetchData();
+  componentDidMount(){ 
+    this._fetchData(1);      
   }
 
   _fetchData(page) {
+    console.log(this.state.user)
     this.setState({isLoadingTail: true});
     request.get(config.api.base + config.api.comment, {
-      accessToken: 'igieivv',
-      creation: '123',
-      page: page
+      accessToken: this.state.user.accessToken,
+      creation: this.props.data._id,
+      
     })
     .then((data) => {
-
+      console.log(data)
       if (data.success) {
         let items = cachedResults.items.slice();
         items = items.concat(data.data);
@@ -173,6 +176,7 @@ export default class Detail extends Component {
   }
 
   _renderRow(row){
+    console.log(row)
     return (
         <View style={styles.replyBox} key={row._id}>
           <Image style={styles.replyAvatar} source={{uri:row.replyBy.avatar}}/>
@@ -264,6 +268,7 @@ export default class Detail extends Component {
     })
   }
   render() {
+    console.log(this.state.user)
   const {data} =  this.props;
     return (
       <View style={styles.container}>
