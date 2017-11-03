@@ -108,7 +108,7 @@ export default class List extends Component {
   _renderRow(row){
     // console.log(row)
     return (
-      <Item row = {row} onSelect = {() => this._loadPage(row)} key = {row._id}/>
+      <Item row = {row} user = {this.state.user} onSelect = {() => this._loadPage(row)} key = {row._id}/>
     )
   }
 

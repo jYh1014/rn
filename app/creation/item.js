@@ -25,11 +25,12 @@ export default class Item extends Component {
   _up(){
     let up = !this.state.up;
     let row = this.props.row;
+    let user = this.props.user
     let url = config.api.base + config.api.up;
     let body = {
       id: row._id,
       up: up?"true":"false",
-      accessToken: "huegt"
+      accessToken: user.accessToken
     };
     
     request.post(url,body)
@@ -53,7 +54,7 @@ export default class Item extends Component {
         <View style={styles.item}>
           <Text style={styles.title}>{row.title}</Text>
           <Image source={{uri:row.cloudinary_thumb}} style={styles.thumb} />
-            <Icon name="ios-play" size={28} style={styles.play}/>
+            {/* <Icon name="ios-play" size={28} style={styles.play}/> */}
           <View style={styles.itemFooter}>
             <View style={styles.handleBox}>
               <Icon name={this.state.up?"ios-heart":"ios-heart-outline"} size={28} onPress = {this._up.bind(this)} style={[styles.up,this.state.up?null:styles.down]}/>
