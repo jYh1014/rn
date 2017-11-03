@@ -5,6 +5,7 @@ import request from '../common/request'
 import config from '../common/config'
 import Item from './item'
 import Detail from './detail'
+import Test from './Test'
 import {
   AppRegistry,
   StyleSheet,
@@ -105,7 +106,7 @@ export default class List extends Component {
   }
 
   _renderRow(row){
-    console.log(row)
+    // console.log(row)
     return (
       <Item row = {row} onSelect = {() => this._loadPage(row)} key = {row._id}/>
     )
@@ -149,7 +150,7 @@ export default class List extends Component {
   _loadPage(row){
    
     this.props.navigator.push({
-      component: Detail,
+      component: Test,
       title: '视频详情',
       passProps: {
         data: row,

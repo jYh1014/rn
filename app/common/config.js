@@ -8,6 +8,7 @@ const option = {
     }
   },
   qiniu:{
+    base:'owthc2jo8.bkt.clouddn.com/',
     upload:'http://upload.qiniu.com/'
   },
   cloudinary:{
