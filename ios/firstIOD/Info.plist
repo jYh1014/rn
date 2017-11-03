@@ -9,9 +9,9 @@
 	<key>NSCalendarsUsageDescription</key>
 	<string>we need use camera</string>
 	<key>CFBundleDevelopmentRegion</key>
-	<string>en</string>
+	<string>zh_CN</string>
 	<key>CFBundleDisplayName</key>
-	<string>firstIOD</string>
+	<string>好好熊</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>

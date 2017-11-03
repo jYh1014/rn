@@ -8,19 +8,24 @@ import {
   TabBarIOS,
   View,
   NavigatorIOS,
-  AsyncStorage
+  AsyncStorage,
+  ActivityIndicator,
+  Dimensions
 } from 'react-native';
 import List from './app/creation/index'
 import Edit from './app/edit/index'
 import Login from './app/account/login'
 import Account from './app/account/index'
+const width = Dimensions.get('window').width;
+const height = Dimensions.get('window').height;
 export default class firstIOD extends Component {
   constructor(props){
     super(props);
     this.state = {
       selectedTab:'account',
       logined: false,
-      user: null
+      user: null,
+      booted:false
     }
   }
   // _renderContent(color: string, pageText: string, num?: number) {
@@ -44,7 +49,7 @@ _logout(){
   _AsyncAppStatus(){
     AsyncStorage.getItem('user').then((data) => {
       let user;
-      let newState = {};
+      let newState = {booted:true};
       if (data) {
         user = JSON.parse(data);
         if (user && user.accessToken) {
@@ -71,6 +76,11 @@ _logout(){
   }
 
   render() {
+    if(!this.state.booted){
+      return <View style={styles.bootPage}>
+        <ActivityIndicator color="#ee735c" />
+      </View>
+    }
     if (!this.state.logined) {
       return <Login afterLogin = {this._afterLogin.bind(this)} />
     }
@@ -125,5 +135,11 @@ var styles = StyleSheet.create({
     color: 'white',
     margin: 50,
   },
+  bootPage: {
+    width:width,
+    height:height,
+    backgroundColor:'#fff',
+    justifyContent:'center'
+  }
 });
 AppRegistry.registerComponent('firstIOD', () => firstIOD);
