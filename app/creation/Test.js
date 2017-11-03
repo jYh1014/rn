@@ -285,7 +285,22 @@ export default class Detail extends Component {
     return (
       <View style={styles.container}>
         <View style={styles.videoBox}>
-        
+        <Video
+            ref="videoPlayer"
+            source={{uri: data.video}}
+            style={styles.video}
+            volumn={5}
+            paused={this.state.paused}
+            rate={this.state.rate}
+            muted={this.state.muted}
+            resizeMode={this.state.resizeMode}
+            repeat={this.state.repeat}
+            onLoadStart={this._onLoadStart.bind(this)}
+            onLoad={this._onLoad.bind(this)}
+            onProgress={this._onProgress.bind(this)}
+            onEnd={this._onEnd.bind(this)}
+            onError={this._onError.bind(this)}
+            />
           {
             !this.state.videoOK && <Text style={styles.failText}>视频出错了 很抱歉...</Text>
           }
