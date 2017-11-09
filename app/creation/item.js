@@ -48,7 +48,7 @@ export default class Item extends Component {
 
   render() {
     const { row } = this.props;
-    console.log(row)
+    // console.log(row)
     return (
       <TouchableHighlight onPress = {this.props.onSelect}>
         <View style={styles.item}>

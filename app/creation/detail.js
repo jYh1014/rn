@@ -1,4 +1,3 @@
-
 import React, { Component } from 'react';
 import {
   AppRegistry,
@@ -31,6 +30,7 @@ export default class Detail extends Component {
   constructor(props){
     super(props);
     let ds = new ListView.DataSource({rowHasChanged: (r1, r2) => r1 !== r2});
+    
     this.state = {
       rate: 1,
       muted: false,
@@ -50,7 +50,8 @@ export default class Detail extends Component {
       modalVisible:false,
       isSending:false,
       content:'',
-      user:this.props.user
+      user:this.props.user,
+      data:this.props.data
     }
   }
   _backToList(){
@@ -177,9 +178,10 @@ export default class Detail extends Component {
 
   _renderRow(row){
     console.log(row)
+    
     return (
         <View style={styles.replyBox} key={row._id}>
-          <Image style={styles.replyAvatar} source={{uri:row.replyBy.avatar}}/>
+          <Image style={styles.replyAvatar} source={{uri:'http://owthc2jo8.bkt.clouddn.com/'+row.replyBy.avatar}}/>
           <View style={styles.reply}>
             <Text style={styles.replyNickName}>{row.replyBy.nickName}</Text>
             <Text style={styles.replyContent}>{row.content}</Text>
@@ -189,12 +191,13 @@ export default class Detail extends Component {
   }
   _renderHeader(){
     let data = this.props.data;
+    
     return (
       <View>
         <View style={styles.infoBox}>
-          <Image style={styles.avatar} source={{uri:data.author.avatar}}/>
+          <Image style={styles.avatar} source={{uri:'http://owthc2jo8.bkt.clouddn.com/'+this.state.user.avatar}}/>
           <View style={styles.descBox}>
-            <Text style={styles.nickName}>{data.author.nickName}</Text>
+            <Text style={styles.nickName}>{this.state.user.nickName}</Text>
             <Text style={styles.title}>{data.title}</Text>
           </View>
         </View>
@@ -234,24 +237,32 @@ export default class Detail extends Component {
     this.setState({
       isSending:true
     },() => {
-      let body ={
-        accessToken:'qew',
-        creation:'2144',
-        content:this.state.content
-      };
+    //   let body ={
+    //     accessToken:this.state.user.accessToken,
+    //     creation:this.state.data._id,
+    //     content:this.state.content
+    //   };
+    let body = {
+        accessToken:this.state.user.accessToken,
+        comment:{
+            creation:this.state.data._id,
+            content:this.state.content
+        }
+    }
       let url = config.api.base + config.api.comment;
       request.post(url,body).then((data) => {
-
+        console.log(data)
         if (data && data.success) {
+          let newItem = data.data
           let items = cachedResults.items.slice();
-          items = [{
-            content:this.state.content,
+          newItem = [{
+            content:newItem[0].content,
             replyBy:{
-              nickName:'狗狗',
-              avatar:'http://dummyimage.com/640x640/1f8523)'
+              nickName:newItem[0].replyBy.nickName,
+              avatar:newItem[0].replyBy.avatar
             }
           }].concat(items);
-          cachedResults.items = items;
+          cachedResults.items = newItem;
           cachedResults.total = cachedResults.total + 1;
           this.setState({
             isSending:false,
@@ -268,14 +279,15 @@ export default class Detail extends Component {
     })
   }
   render() {
-    console.log(this.state.user)
-  const {data} =  this.props;
+    
+    // const {data} =  this.props;
+    // console.log(data)
     return (
       <View style={styles.container}>
         <View style={styles.videoBox}>
-          <Video
+        {/* {<Video
             ref="videoPlayer"
-            source={{uri: data.video}}
+            source={{uri:'owthc2jo8.bkt.clouddn.com/'+this.props.data.qiniu_video }}
             style={styles.video}
             volumn={5}
             paused={this.state.paused}
@@ -288,7 +300,7 @@ export default class Detail extends Component {
             onProgress={this._onProgress.bind(this)}
             onEnd={this._onEnd.bind(this)}
             onError={this._onError.bind(this)}
-            />
+            />} */}
           {
             !this.state.videoOK && <Text style={styles.failText}>视频出错了 很抱歉...</Text>
           }
@@ -330,7 +342,7 @@ export default class Detail extends Component {
             renderFooter = {this._renderFooter.bind(this)}
             renderHeader = {this._renderHeader.bind(this)}
           />
-        <Modal
+          <Modal
           animationType={'fade'}
           visible={this.state.modalVisible}
           onRequestClose={this._setModalVisible.bind(this,false)}>

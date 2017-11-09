@@ -16,6 +16,7 @@ import List from './app/creation/index'
 import Edit from './app/edit/index'
 import Login from './app/account/login'
 import Account from './app/account/index'
+import Slider from './app/account/slider'
 const width = Dimensions.get('window').width;
 const height = Dimensions.get('window').height;
 export default class firstIOD extends Component {
@@ -25,7 +26,8 @@ export default class firstIOD extends Component {
       selectedTab:'account',
       logined: false,
       user: null,
-      booted:false
+      booted:false,
+      entered:false
     }
   }
   // _renderContent(color: string, pageText: string, num?: number) {
@@ -47,16 +49,24 @@ _logout(){
   })
 }
   _AsyncAppStatus(){
-    AsyncStorage.getItem('user').then((data) => {
+    AsyncStorage.multiGet(['user','entered']).then((data) => {
       let user;
-      let newState = {booted:true};
-      if (data) {
-        user = JSON.parse(data);
+      let userdata = data[0][1]
+      let entered = data[1][1]
+      console.log(entered)
+      this.setState({booted:true})
+      let newState = {};
+      if (userdata) {
+        user = JSON.parse(userdata);
         if (user && user.accessToken) {
           newState.user = user;
           newState.logined = true;
         }else{
           newState.logined = false;
+        }
+        if(entered == 'yes'){
+          newState.entered = true
+          // newState.logined = false;
         }
         this.setState(newState);
       }
@@ -74,12 +84,19 @@ _logout(){
       })
     })
   }
-
+  _enterSlide(){
+    this.setState({entered:true},() => {
+      AsyncStorage.setItem('entered','yes')
+    })
+  }
   render() {
     if(!this.state.booted){
       return <View style={styles.bootPage}>
         <ActivityIndicator color="#ee735c" />
       </View>
+    }
+    if(!this.state.entered){
+      return <Slider enterSlide={this._enterSlide.bind(this)}/>
     }
     if (!this.state.logined) {
       return <Login afterLogin = {this._afterLogin.bind(this)} />

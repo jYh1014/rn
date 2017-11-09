@@ -21,7 +21,7 @@ const option = {
   audio: 'https://api.cloudinary.com/v1_1/babeying/raw/upload',
 },
   api: {
-    base:"http://localhost:8080/",
+    base:"http://localhost:3001/",
     // base: "http://rapapi.org/mockjs/25467/",
     creations: "api/creations",
     up: "api/up",

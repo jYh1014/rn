@@ -1,4 +1,3 @@
-
 import React, { Component } from 'react';
 import {
   AppRegistry,
@@ -198,7 +197,7 @@ export default class Detail extends Component {
         <View style={styles.infoBox}>
           <Image style={styles.avatar} source={{uri:'http://owthc2jo8.bkt.clouddn.com/'+this.state.user.avatar}}/>
           <View style={styles.descBox}>
-            <Text style={styles.nickName}>{data.nickName}</Text>
+            <Text style={styles.nickName}>{this.state.user.nickName}</Text>
             <Text style={styles.title}>{data.title}</Text>
           </View>
         </View>
@@ -254,15 +253,17 @@ export default class Detail extends Component {
       request.post(url,body).then((data) => {
         console.log(data)
         if (data && data.success) {
+          let newItem = data.data
           let items = cachedResults.items.slice();
-          items = [{
-            content:this.state.content,
+          newItem = [{
+            content:newItem[0].content,
+            // replyBy:newItem.replyBy
             replyBy:{
-              nickName:'狗狗',
-              avatar:'http://dummyimage.com/640x640/1f8523)'
+              nickName:newItem[0].replyBy.nickName,
+              avatar:newItem[0].replyBy.avatar
             }
           }].concat(items);
-          cachedResults.items = items;
+          cachedResults.items = newItem;
           cachedResults.total = cachedResults.total + 1;
           this.setState({
             isSending:false,
@@ -280,14 +281,14 @@ export default class Detail extends Component {
   }
   render() {
     
-    const {data} =  this.props;
-    
+    // const {data} =  this.props;
+    // console.log(data)
     return (
       <View style={styles.container}>
         <View style={styles.videoBox}>
-        <Video
+        {/* <Video
             ref="videoPlayer"
-            source={{uri: data.video}}
+            source={{uri:'owthc2jo8.bkt.clouddn.com/'+this.state.data.qiniu_video }}
             style={styles.video}
             volumn={5}
             paused={this.state.paused}
@@ -300,7 +301,7 @@ export default class Detail extends Component {
             onProgress={this._onProgress.bind(this)}
             onEnd={this._onEnd.bind(this)}
             onError={this._onError.bind(this)}
-            />
+            /> */}
           {
             !this.state.videoOK && <Text style={styles.failText}>视频出错了 很抱歉...</Text>
           }

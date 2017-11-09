@@ -150,7 +150,7 @@ export default class List extends Component {
   _loadPage(row){
    
     this.props.navigator.push({
-      component: Test,
+      component: Detail,
       title: '视频详情',
       passProps: {
         data: row,

@@ -447,7 +447,7 @@ _submit(){
                 ref="videoPlayer"
                 source={{uri: this.state.previewVideo}}
                 style={styles.video}
-                volumn={5}
+               
                 paused={this.state.paused}
                 rate={this.state.rate}
                 muted={this.state.muted}
