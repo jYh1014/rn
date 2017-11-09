@@ -1,7 +1,7 @@
 {
     "app":[{
         "name": "firstIOD",
-        "script": "./server/app.js",
+        "script": "/server/app.js",
         "env": {
             "COMMON_VARIABLE":"true"
         },
@@ -20,7 +20,7 @@
             "repo":"https://github.com/jYh1014/rn.git",
             "path":"/www/jyy_ios/production",
             "ssh_options":"StrictHostKeyChecking=no",
-            "post-deploy":"npm install --registry=http://registry.npm.taobao.org && npm start && pm2 startOrRestart ecosystem.json --env production",            
+            "post-deploy":"npm install --registry=http://registry.npm.taobao.org && pm2 startOrRestart ecosystem.json --env production",            
             "env":{
                 "NODE_ENV":"production"
             }
