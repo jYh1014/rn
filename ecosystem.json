@@ -1,6 +1,6 @@
 {
     "app":[{
-        "name": "firstIOS",
+        "name": "firstIOD",
         "script": "server/app.js",
         "env": {
             "COMMON_VARIABLE":"true"
@@ -18,7 +18,7 @@
             "port":"39999",
             "ref":"origin/master",
             "repo":"https://github.com/jYh1014/rn.git",
-            "path":"/www/firstIOS/production",
+            "path":"/www/jyy_ios/production",
             "ssh_options":"StrictHostKeyChecking=no",
             "post-deploy":"npm install --registry=http://registry.npm.taobao.org && pm2 startOrRestart ecosystem.json --env production",            
             "env":{
