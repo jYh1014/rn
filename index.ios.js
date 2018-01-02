@@ -75,7 +75,6 @@ _logout(){
   }
   _afterLogin(user){
     user = JSON.stringify(user);
-
     AsyncStorage.setItem('user',user)
     .then(() => {
       this.setState({
